@@ -14,6 +14,7 @@ import (
 // It will decode to null, not zero, if null.
 type Float struct {
 	sql.NullFloat64
+	Present bool
 }
 
 // NewFloat creates a new Float
@@ -52,6 +53,7 @@ func (f Float) ValueOrZero() float64 {
 // 0 will not be considered a null Float.
 // It also supports unmarshalling a sql.NullFloat64.
 func (f *Float) UnmarshalJSON(data []byte) error {
+	f.Present = true
 	var err error
 	var v interface{}
 	if err = json.Unmarshal(data, &v); err != nil {
@@ -83,6 +85,7 @@ func (f *Float) UnmarshalJSON(data []byte) error {
 // It will unmarshal to a null Float if the input is a blank or not an integer.
 // It will return an error if the input is not an integer, blank, or "null".
 func (f *Float) UnmarshalText(text []byte) error {
+	f.Present = true
 	str := string(text)
 	if str == "" || str == "null" {
 		f.Valid = false

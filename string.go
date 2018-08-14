@@ -15,6 +15,7 @@ import (
 // It will marshal to null if null. Blank string input will be considered null.
 type String struct {
 	sql.NullString
+	Present bool
 }
 
 // StringFrom creates a new String that will never be blank.
@@ -52,6 +53,7 @@ func NewString(s string, valid bool) String {
 // It supports string and null input. Blank string input does not produce a null String.
 // It also supports unmarshalling a sql.NullString.
 func (s *String) UnmarshalJSON(data []byte) error {
+	s.Present = true
 	var err error
 	var v interface{}
 	if err = json.Unmarshal(data, &v); err != nil {
@@ -93,6 +95,7 @@ func (s String) MarshalText() ([]byte, error) {
 // UnmarshalText implements encoding.TextUnmarshaler.
 // It will unmarshal to a null String if the input is a blank string.
 func (s *String) UnmarshalText(text []byte) error {
+	s.Present = true
 	s.String = string(text)
 	s.Valid = s.String != ""
 	return nil
