@@ -21,11 +21,13 @@ type stringInStruct struct {
 func TestStringFrom(t *testing.T) {
 	str := StringFrom("test")
 	assertStr(t, str, "StringFrom() string")
+	assertPresentString(t, str, "true: initial state is present")
 
 	zero := StringFrom("")
 	if !zero.Valid {
 		t.Error("StringFrom(0)", "is invalid, but should be valid")
 	}
+	assertPresentString(t, zero, "false: initial state is present")
 }
 
 func TestStringFromPtr(t *testing.T) {
@@ -33,9 +35,11 @@ func TestStringFromPtr(t *testing.T) {
 	sptr := &s
 	str := StringFromPtr(sptr)
 	assertStr(t, str, "StringFromPtr() string")
+	assertPresentString(t, str, "true: initial state is present")
 
 	null := StringFromPtr(nil)
 	assertNullStr(t, null, "StringFromPtr(nil)")
+	assertPresentString(t, null, "nil: initial state is present")
 }
 
 func TestUnmarshalString(t *testing.T) {
@@ -43,11 +47,13 @@ func TestUnmarshalString(t *testing.T) {
 	err := json.Unmarshal(stringJSON, &str)
 	maybePanic(err)
 	assertStr(t, str, "string json")
+	assertPresentString(t, str, "string json")
 
 	var ns String
 	err = json.Unmarshal(nullStringJSON, &ns)
 	maybePanic(err)
 	assertStr(t, ns, "sql.NullString json")
+	assertPresentString(t, ns, "sql.NullString json")
 
 	var blank String
 	err = json.Unmarshal(blankStringJSON, &blank)
@@ -55,11 +61,13 @@ func TestUnmarshalString(t *testing.T) {
 	if !blank.Valid {
 		t.Error("blank string should be valid")
 	}
+	assertPresentString(t, blank, "blank string")
 
 	var null String
 	err = json.Unmarshal(nullJSON, &null)
 	maybePanic(err)
 	assertNullStr(t, null, "null json")
+	assertPresentString(t, null, "null json")
 
 	var badType String
 	err = json.Unmarshal(boolJSON, &badType)
@@ -67,6 +75,7 @@ func TestUnmarshalString(t *testing.T) {
 		panic("err should not be nil")
 	}
 	assertNullStr(t, badType, "wrong type json")
+	assertPresentString(t, badType, "wrong type json")
 
 	var invalid String
 	err = invalid.UnmarshalJSON(invalidJSON)
@@ -74,6 +83,7 @@ func TestUnmarshalString(t *testing.T) {
 		t.Errorf("expected json.SyntaxError, not %T", err)
 	}
 	assertNullStr(t, invalid, "invalid json")
+	assertPresentString(t, invalid, "invalid json")
 }
 
 func TestTextUnmarshalString(t *testing.T) {
@@ -81,11 +91,13 @@ func TestTextUnmarshalString(t *testing.T) {
 	err := str.UnmarshalText([]byte("test"))
 	maybePanic(err)
 	assertStr(t, str, "UnmarshalText() string")
+	assertPresentString(t, str, "UnmarshalText() string")
 
 	var null String
 	err = null.UnmarshalText([]byte(""))
 	maybePanic(err)
 	assertNullStr(t, null, "UnmarshalText() empty string")
+	assertPresentString(t, null, "UnmarshalText() empty string")
 }
 
 func TestMarshalString(t *testing.T) {
@@ -171,11 +183,13 @@ func TestStringScan(t *testing.T) {
 	err := str.Scan("test")
 	maybePanic(err)
 	assertStr(t, str, "scanned string")
+	assertPresentString(t, str, "scanned string")
 
 	var null String
 	err = null.Scan(nil)
 	maybePanic(err)
 	assertNullStr(t, null, "scanned null")
+	assertPresentString(t, null, "scanned null")
 }
 
 func TestStringValueOrZero(t *testing.T) {
@@ -183,11 +197,13 @@ func TestStringValueOrZero(t *testing.T) {
 	if valid.ValueOrZero() != "test" {
 		t.Error("unexpected ValueOrZero", valid.ValueOrZero())
 	}
+	assertPresentString(t, valid, "NewString(\"test\", true)")
 
 	invalid := NewString("test", false)
 	if invalid.ValueOrZero() != "" {
 		t.Error("unexpected ValueOrZero", invalid.ValueOrZero())
 	}
+	assertPresentString(t, invalid, "NewString(\"test\", false)")
 }
 
 func maybePanic(err error) {
@@ -214,5 +230,17 @@ func assertNullStr(t *testing.T, s String, from string) {
 func assertJSONEquals(t *testing.T, data []byte, cmp string, from string) {
 	if string(data) != cmp {
 		t.Errorf("bad %s data: %s ≠ %s\n", from, data, cmp)
+	}
+}
+
+func assertPresentString(t *testing.T, s String, from string) {
+	if !s.Present {
+		t.Error(from, "is absent, but should be present")
+	}
+}
+
+func assertAbsentString(t *testing.T, s String, from string) {
+	if s.Present {
+		t.Error(from, "is present, but should be absent")
 	}
 }

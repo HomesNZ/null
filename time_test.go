@@ -21,21 +21,25 @@ func TestUnmarshalTimeJSON(t *testing.T) {
 	err := json.Unmarshal(timeJSON, &ti)
 	maybePanic(err)
 	assertTime(t, ti, "UnmarshalJSON() json")
+	assertPresentTime(t, ti, "UnmarshalJSON() json")
 
 	var null Time
 	err = json.Unmarshal(nullTimeJSON, &null)
 	maybePanic(err)
 	assertNullTime(t, null, "null time json")
+	assertPresentTime(t, null, "null time json")
 
 	var fromObject Time
 	err = json.Unmarshal(timeObject, &fromObject)
 	maybePanic(err)
 	assertTime(t, fromObject, "time from object json")
+	assertPresentTime(t, fromObject, "time from object json")
 
 	var nullFromObj Time
 	err = json.Unmarshal(nullObject, &nullFromObj)
 	maybePanic(err)
 	assertNullTime(t, nullFromObj, "null from object json")
+	assertPresentTime(t, nullFromObj, "null from object json")
 
 	var invalid Time
 	err = invalid.UnmarshalJSON(invalidJSON)
@@ -43,6 +47,7 @@ func TestUnmarshalTimeJSON(t *testing.T) {
 		t.Errorf("expected json.SyntaxError, not %T", err)
 	}
 	assertNullTime(t, invalid, "invalid from object json")
+	assertPresentTime(t, invalid, "invalid from object json")
 
 	var bad Time
 	err = json.Unmarshal(badObject, &bad)
@@ -50,6 +55,7 @@ func TestUnmarshalTimeJSON(t *testing.T) {
 		t.Errorf("expected error: bad object")
 	}
 	assertNullTime(t, bad, "bad from object json")
+	assertPresentTime(t, bad, "bad from object json")
 
 	var wrongType Time
 	err = json.Unmarshal(intJSON, &wrongType)
@@ -57,6 +63,7 @@ func TestUnmarshalTimeJSON(t *testing.T) {
 		t.Errorf("expected error: wrong type JSON")
 	}
 	assertNullTime(t, wrongType, "wrong type object json")
+	assertPresentTime(t, wrongType, "wrong type object json")
 }
 
 func TestUnmarshalTimeText(t *testing.T) {
@@ -101,14 +108,17 @@ func TestMarshalTime(t *testing.T) {
 func TestTimeFrom(t *testing.T) {
 	ti := TimeFrom(timeValue)
 	assertTime(t, ti, "TimeFrom() time.Time")
+	assertPresentTime(t, ti, "true: initial state is present")
 }
 
 func TestTimeFromPtr(t *testing.T) {
 	ti := TimeFromPtr(&timeValue)
 	assertTime(t, ti, "TimeFromPtr() time")
+	assertPresentTime(t, ti, "TimeFromPtr() time")
 
 	null := TimeFromPtr(nil)
 	assertNullTime(t, null, "TimeFromPtr(nil)")
+	assertPresentTime(t, null, "TimeFromPtr(nil)")
 }
 
 func TestTimeSetValid(t *testing.T) {
@@ -139,6 +149,7 @@ func TestTimeScanValue(t *testing.T) {
 	err := ti.Scan(timeValue)
 	maybePanic(err)
 	assertTime(t, ti, "scanned time")
+	assertPresentTime(t, ti, "scanned time")
 	if v, err := ti.Value(); v != timeValue || err != nil {
 		t.Error("bad value or err:", v, err)
 	}
@@ -147,6 +158,7 @@ func TestTimeScanValue(t *testing.T) {
 	err = null.Scan(nil)
 	maybePanic(err)
 	assertNullTime(t, null, "scanned null")
+	assertPresentTime(t, null, "scanned null")
 	if v, err := null.Value(); v != nil || err != nil {
 		t.Error("bad value or err:", v, err)
 	}
@@ -157,6 +169,7 @@ func TestTimeScanValue(t *testing.T) {
 		t.Error("expected error")
 	}
 	assertNullTime(t, wrong, "scanned wrong")
+	assertPresentTime(t, wrong, "scanned wrong")
 }
 
 func TestTimeValueOrZero(t *testing.T) {
@@ -201,5 +214,17 @@ func assertTime(t *testing.T, ti Time, from string) {
 func assertNullTime(t *testing.T, ti Time, from string) {
 	if ti.Valid {
 		t.Error(from, "is valid, but should be invalid")
+	}
+}
+
+func assertPresentTime(t *testing.T, ti Time, from string) {
+	if !ti.Present {
+		t.Error(from, "is absent, but should be present")
+	}
+}
+
+func assertAbsentTime(t *testing.T, ti Time, from string) {
+	if ti.Present {
+		t.Error(from, "is present, but should be absent")
 	}
 }

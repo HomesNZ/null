@@ -14,11 +14,13 @@ var (
 func TestBoolFrom(t *testing.T) {
 	b := BoolFrom(true)
 	assertBool(t, b, "BoolFrom()")
+	assertPresentBool(t, b, "true: initial state is present")
 
 	zero := BoolFrom(false)
 	if !zero.Valid {
 		t.Error("BoolFrom(false)", "is invalid, but should be valid")
 	}
+	assertPresentBool(t, zero, "false: initial state is present")
 }
 
 func TestBoolFromPtr(t *testing.T) {
@@ -26,9 +28,11 @@ func TestBoolFromPtr(t *testing.T) {
 	bptr := &n
 	b := BoolFromPtr(bptr)
 	assertBool(t, b, "BoolFromPtr()")
+	assertPresentBool(t, b, "true: initial state is present")
 
 	null := BoolFromPtr(nil)
 	assertNullBool(t, null, "BoolFromPtr(nil)")
+	assertPresentBool(t, null, "nil: initial state is present")
 }
 
 func TestUnmarshalBool(t *testing.T) {
@@ -36,16 +40,19 @@ func TestUnmarshalBool(t *testing.T) {
 	err := json.Unmarshal(boolJSON, &b)
 	maybePanic(err)
 	assertBool(t, b, "bool json")
+	assertPresentBool(t, b, "bool json")
 
 	var nb Bool
 	err = json.Unmarshal(nullBoolJSON, &nb)
 	maybePanic(err)
 	assertBool(t, nb, "sq.NullBool json")
+	assertPresentBool(t, nb, "sq.NullBool json")
 
 	var null Bool
 	err = json.Unmarshal(nullJSON, &null)
 	maybePanic(err)
 	assertNullBool(t, null, "null json")
+	assertPresentBool(t, null, "null json")
 
 	var badType Bool
 	err = json.Unmarshal(intJSON, &badType)
@@ -53,6 +60,7 @@ func TestUnmarshalBool(t *testing.T) {
 		panic("err should not be nil")
 	}
 	assertNullBool(t, badType, "wrong type json")
+	assertPresentBool(t, badType, "wrong type json")
 
 	var invalid Bool
 	err = invalid.UnmarshalJSON(invalidJSON)
@@ -66,21 +74,25 @@ func TestTextUnmarshalBool(t *testing.T) {
 	err := b.UnmarshalText([]byte("true"))
 	maybePanic(err)
 	assertBool(t, b, "UnmarshalText() bool")
+	assertPresentBool(t, b, "UnmarshalText() bool")
 
 	var zero Bool
 	err = zero.UnmarshalText([]byte("false"))
 	maybePanic(err)
 	assertFalseBool(t, zero, "UnmarshalText() false")
+	assertPresentBool(t, zero, "UnmarshalText() false")
 
 	var blank Bool
 	err = blank.UnmarshalText([]byte(""))
 	maybePanic(err)
 	assertNullBool(t, blank, "UnmarshalText() empty bool")
+	assertPresentBool(t, blank, "UnmarshalText() empty bool")
 
 	var null Bool
 	err = null.UnmarshalText([]byte("null"))
 	maybePanic(err)
 	assertNullBool(t, null, `UnmarshalText() "null"`)
+	assertPresentBool(t, null, `UnmarshalText() "null"`)
 
 	var invalid Bool
 	err = invalid.UnmarshalText([]byte(":D"))
@@ -88,6 +100,7 @@ func TestTextUnmarshalBool(t *testing.T) {
 		panic("err should not be nil")
 	}
 	assertNullBool(t, invalid, "invalid json")
+	assertPresentBool(t, invalid, "invalid json")
 }
 
 func TestMarshalBool(t *testing.T) {
@@ -169,11 +182,13 @@ func TestBoolScan(t *testing.T) {
 	err := b.Scan(true)
 	maybePanic(err)
 	assertBool(t, b, "scanned bool")
+	assertPresentBool(t, b, "scanned bool")
 
 	var null Bool
 	err = null.Scan(nil)
 	maybePanic(err)
 	assertNullBool(t, null, "scanned null")
+	assertPresentBool(t, null, "scanned null")
 }
 
 func TestBoolValueOrZero(t *testing.T) {
@@ -181,11 +196,13 @@ func TestBoolValueOrZero(t *testing.T) {
 	if valid.ValueOrZero() != true {
 		t.Error("unexpected ValueOrZero", valid.ValueOrZero())
 	}
+	assertPresentBool(t, valid, "NewBool(true, true).Present")
 
 	invalid := NewBool(true, false)
 	if invalid.ValueOrZero() != false {
 		t.Error("unexpected ValueOrZero", invalid.ValueOrZero())
 	}
+	assertPresentBool(t, invalid, "NewBool(true, false).Present")
 }
 
 func assertBool(t *testing.T, b Bool, from string) {
@@ -209,5 +226,17 @@ func assertFalseBool(t *testing.T, b Bool, from string) {
 func assertNullBool(t *testing.T, b Bool, from string) {
 	if b.Valid {
 		t.Error(from, "is valid, but should be invalid")
+	}
+}
+
+func assertPresentBool(t *testing.T, b Bool, from string) {
+	if !b.Present {
+		t.Error(from, "is absent, but should be present")
+	}
+}
+
+func assertAbsentBool(t *testing.T, b Bool, from string) {
+	if b.Present {
+		t.Error(from, "is present, but should be absent")
 	}
 }
