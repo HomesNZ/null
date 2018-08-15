@@ -23,6 +23,7 @@ func NewBool(b bool, valid bool) Bool {
 			Bool:  b,
 			Valid: valid,
 		},
+		Present: true,
 	}
 }
 
@@ -134,4 +135,10 @@ func (b Bool) Ptr() *bool {
 // A non-null Bool with a 0 value will not be considered zero.
 func (b Bool) IsZero() bool {
 	return !b.Valid
+}
+
+// Scan implements the Scanner interface.
+func (b *Bool) Scan(value interface{}) error {
+	b.Present = true
+	return b.NullBool.Scan(value)
 }

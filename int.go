@@ -23,6 +23,7 @@ func NewInt(i int64, valid bool) Int {
 			Int64: i,
 			Valid: valid,
 		},
+		Present: true,
 	}
 }
 
@@ -133,4 +134,10 @@ func (i Int) Ptr() *int64 {
 // A non-null Int with a 0 value will not be considered zero.
 func (i Int) IsZero() bool {
 	return !i.Valid
+}
+
+// Scan implements the Scanner interface.
+func (i *Int) Scan(value interface{}) error {
+	i.Present = true
+	return i.NullInt64.Scan(value)
 }

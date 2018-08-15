@@ -46,6 +46,7 @@ func NewString(s string, valid bool) String {
 			String: s,
 			Valid:  valid,
 		},
+		Present: true,
 	}
 }
 
@@ -118,4 +119,10 @@ func (s String) Ptr() *string {
 // IsZero returns true for null strings, for potential future omitempty support.
 func (s String) IsZero() bool {
 	return !s.Valid
+}
+
+// Scan implements the Scanner interface.
+func (s *String) Scan(value interface{}) error {
+	s.Present = true
+	return s.NullString.Scan(value)
 }

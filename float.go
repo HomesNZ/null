@@ -24,6 +24,7 @@ func NewFloat(f float64, valid bool) Float {
 			Float64: f,
 			Valid:   valid,
 		},
+		Present: true,
 	}
 }
 
@@ -139,4 +140,10 @@ func (f Float) Ptr() *float64 {
 // A non-null Float with a 0 value will not be considered zero.
 func (f Float) IsZero() bool {
 	return !f.Valid
+}
+
+// Scan implements the Scanner interface.
+func (f *Float) Scan(value interface{}) error {
+	f.Present = true
+	return f.NullFloat64.Scan(value)
 }

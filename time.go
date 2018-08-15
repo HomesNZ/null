@@ -44,8 +44,9 @@ func (t Time) Value() (driver.Value, error) {
 // NewTime creates a new Time.
 func NewTime(t time.Time, valid bool) Time {
 	return Time{
-		Time:  t,
-		Valid: valid,
+		Time:    t,
+		Valid:   valid,
+		Present: true,
 	}
 }
 
