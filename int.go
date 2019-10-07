@@ -26,7 +26,7 @@ func NewInt(i int64, valid bool) Int {
 }
 
 // Encoder fulfills the requirements for encoding a null.Int for schema.RegisterEncoder
-func Encoder(val reflect.Value) string {
+func (Int) Encoder(val reflect.Value) string {
 	convVal := val.Interface().(Int)
 	return strconv.Itoa(int(convVal.ValueOrZero()))
 }
