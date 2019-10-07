@@ -25,6 +25,15 @@ func NewInt(i int64, valid bool) Int {
 	}
 }
 
+// EncoderInt fulfills the requirements for encoding a null.Int for schema.RegisterEncoder
+func EncoderInt(val reflect.Value) string {
+	convVal := val.Interface().(Int)
+	if convVal.ValueOrZero() == 0 {
+		return "null"
+	}
+	return strconv.Itoa(int(convVal.ValueOrZero()))
+}
+
 // IntFrom creates a new Int that will always be valid.
 func IntFrom(i int64) Int {
 	return NewInt(i, true)
