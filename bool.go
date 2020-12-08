@@ -13,6 +13,7 @@ import (
 // It will decode to null, not false, if null.
 type Bool struct {
 	sql.NullBool
+	Present bool
 }
 
 // NewBool creates a new Bool
@@ -22,6 +23,7 @@ func NewBool(b bool, valid bool) Bool {
 			Bool:  b,
 			Valid: valid,
 		},
+		Present: true,
 	}
 }
 
@@ -48,6 +50,7 @@ func (b Bool) ValueOrZero() bool {
 // 0 will not be considered a null Bool.
 // It also supports unmarshalling a sql.NullBool.
 func (b *Bool) UnmarshalJSON(data []byte) error {
+	b.Present = true
 	var err error
 	var v interface{}
 	if err = json.Unmarshal(data, &v); err != nil {
@@ -72,6 +75,7 @@ func (b *Bool) UnmarshalJSON(data []byte) error {
 // It will unmarshal to a null Bool if the input is a blank or not an integer.
 // It will return an error if the input is not an integer, blank, or "null".
 func (b *Bool) UnmarshalText(text []byte) error {
+	b.Present = true
 	str := string(text)
 	switch str {
 	case "", "null":
@@ -131,4 +135,10 @@ func (b Bool) Ptr() *bool {
 // A non-null Bool with a 0 value will not be considered zero.
 func (b Bool) IsZero() bool {
 	return !b.Valid
+}
+
+// Scan implements the Scanner interface.
+func (b *Bool) Scan(value interface{}) error {
+	b.Present = true
+	return b.NullBool.Scan(value)
 }

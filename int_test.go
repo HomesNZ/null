@@ -16,11 +16,13 @@ var (
 func TestIntFrom(t *testing.T) {
 	i := IntFrom(12345)
 	assertInt(t, i, "IntFrom()")
+	assertPresentInt(t, i, "true: initial state is present")
 
 	zero := IntFrom(0)
 	if !zero.Valid {
 		t.Error("IntFrom(0)", "is invalid, but should be valid")
 	}
+	assertPresentInt(t, zero, "false: initial state is present")
 }
 
 func TestIntFromPtr(t *testing.T) {
@@ -28,9 +30,11 @@ func TestIntFromPtr(t *testing.T) {
 	iptr := &n
 	i := IntFromPtr(iptr)
 	assertInt(t, i, "IntFromPtr()")
+	assertPresentInt(t, i, "true: initial state is present")
 
 	null := IntFromPtr(nil)
 	assertNullInt(t, null, "IntFromPtr(nil)")
+	assertPresentInt(t, null, "nil: initial state is present")
 }
 
 func TestUnmarshalInt(t *testing.T) {
@@ -38,26 +42,31 @@ func TestUnmarshalInt(t *testing.T) {
 	err := json.Unmarshal(intJSON, &i)
 	maybePanic(err)
 	assertInt(t, i, "int json")
+	assertPresentInt(t, i, "int json")
 
 	var si Int
 	err = json.Unmarshal(intStringJSON, &si)
 	maybePanic(err)
 	assertInt(t, si, "int string json")
+	assertPresentInt(t, si, "int string json")
 
 	var ni Int
 	err = json.Unmarshal(nullIntJSON, &ni)
 	maybePanic(err)
 	assertInt(t, ni, "sql.NullInt64 json")
+	assertPresentInt(t, ni, "sql.NullInt64 json")
 
 	var bi Int
 	err = json.Unmarshal(floatBlankJSON, &bi)
 	maybePanic(err)
 	assertNullInt(t, bi, "blank json string")
+	assertPresentInt(t, bi, "blank json string")
 
 	var null Int
 	err = json.Unmarshal(nullJSON, &null)
 	maybePanic(err)
 	assertNullInt(t, null, "null json")
+	assertPresentInt(t, null, "null json")
 
 	var badType Int
 	err = json.Unmarshal(boolJSON, &badType)
@@ -65,6 +74,7 @@ func TestUnmarshalInt(t *testing.T) {
 		panic("err should not be nil")
 	}
 	assertNullInt(t, badType, "wrong type json")
+	assertPresentInt(t, badType, "wrong type json")
 
 	var invalid Int
 	err = invalid.UnmarshalJSON(invalidJSON)
@@ -72,6 +82,7 @@ func TestUnmarshalInt(t *testing.T) {
 		t.Errorf("expected json.SyntaxError, not %T", err)
 	}
 	assertNullInt(t, invalid, "invalid json")
+	assertPresentInt(t, invalid, "invalid json")
 }
 
 func TestUnmarshalNonIntegerNumber(t *testing.T) {
@@ -103,16 +114,19 @@ func TestTextUnmarshalInt(t *testing.T) {
 	err := i.UnmarshalText([]byte("12345"))
 	maybePanic(err)
 	assertInt(t, i, "UnmarshalText() int")
+	assertPresentInt(t, i, "UnmarshalText() int")
 
 	var blank Int
 	err = blank.UnmarshalText([]byte(""))
 	maybePanic(err)
 	assertNullInt(t, blank, "UnmarshalText() empty int")
+	assertPresentInt(t, blank, "UnmarshalText() empty int")
 
 	var null Int
 	err = null.UnmarshalText([]byte("null"))
 	maybePanic(err)
 	assertNullInt(t, null, `UnmarshalText() "null"`)
+	assertPresentInt(t, null, `UnmarshalText() "null"`)
 }
 
 func TestMarshalInt(t *testing.T) {
@@ -184,11 +198,13 @@ func TestIntScan(t *testing.T) {
 	err := i.Scan(12345)
 	maybePanic(err)
 	assertInt(t, i, "scanned int")
+	assertPresentInt(t, i, "scanned int")
 
 	var null Int
 	err = null.Scan(nil)
 	maybePanic(err)
 	assertNullInt(t, null, "scanned null")
+	assertPresentInt(t, null, "scanned null")
 }
 
 func TestIntValueOrZero(t *testing.T) {
@@ -196,11 +212,13 @@ func TestIntValueOrZero(t *testing.T) {
 	if valid.ValueOrZero() != 12345 {
 		t.Error("unexpected ValueOrZero", valid.ValueOrZero())
 	}
+	assertPresentInt(t, valid, "NewInt(12345, true).Present")
 
 	invalid := NewInt(12345, false)
 	if invalid.ValueOrZero() != 0 {
 		t.Error("unexpected ValueOrZero", invalid.ValueOrZero())
 	}
+	assertPresentInt(t, invalid, "NewInt(12345, false).Present")
 }
 
 func assertInt(t *testing.T, i Int, from string) {
@@ -215,5 +233,17 @@ func assertInt(t *testing.T, i Int, from string) {
 func assertNullInt(t *testing.T, i Int, from string) {
 	if i.Valid {
 		t.Error(from, "is valid, but should be invalid")
+	}
+}
+
+func assertPresentInt(t *testing.T, i Int, from string) {
+	if !i.Present {
+		t.Error(from, "is absent, but should be present")
+	}
+}
+
+func assertAbsentInt(t *testing.T, i Int, from string) {
+	if i.Present {
+		t.Error(from, "is present, but should be absent")
 	}
 }

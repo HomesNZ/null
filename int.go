@@ -13,6 +13,7 @@ import (
 // It will decode to null, not zero, if null.
 type Int struct {
 	sql.NullInt64
+	Present bool
 }
 
 // NewInt creates a new Int
@@ -22,6 +23,7 @@ func NewInt(i int64, valid bool) Int {
 			Int64: i,
 			Valid: valid,
 		},
+		Present: true,
 	}
 }
 
@@ -60,6 +62,7 @@ func (i Int) ValueOrZero() int64 {
 // 0 will not be considered a null Int.
 // It also supports unmarshalling a sql.NullInt64.
 func (i *Int) UnmarshalJSON(data []byte) error {
+	i.Present = true
 	var err error
 	var v interface{}
 	if err = json.Unmarshal(data, &v); err != nil {
@@ -92,6 +95,7 @@ func (i *Int) UnmarshalJSON(data []byte) error {
 // It will unmarshal to a null Int if the input is a blank or not an integer.
 // It will return an error if the input is not an integer, blank, or "null".
 func (i *Int) UnmarshalText(text []byte) error {
+	i.Present = true
 	str := string(text)
 	if str == "" || str == "null" {
 		i.Valid = false
@@ -139,4 +143,10 @@ func (i Int) Ptr() *int64 {
 // A non-null Int with a 0 value will not be considered zero.
 func (i Int) IsZero() bool {
 	return !i.Valid
+}
+
+// Scan implements the Scanner interface.
+func (i *Int) Scan(value interface{}) error {
+	i.Present = true
+	return i.NullInt64.Scan(value)
 }

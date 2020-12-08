@@ -11,12 +11,14 @@ import (
 // Time is a nullable time.Time. It supports SQL and JSON serialization.
 // It will marshal to null if null.
 type Time struct {
-	Time  time.Time
-	Valid bool
+	Time    time.Time
+	Valid   bool
+	Present bool
 }
 
 // Scan implements the Scanner interface.
 func (t *Time) Scan(value interface{}) error {
+	t.Present = true
 	var err error
 	switch x := value.(type) {
 	case time.Time:
@@ -42,8 +44,9 @@ func (t Time) Value() (driver.Value, error) {
 // NewTime creates a new Time.
 func NewTime(t time.Time, valid bool) Time {
 	return Time{
-		Time:  t,
-		Valid: valid,
+		Time:    t,
+		Valid:   valid,
+		Present: true,
 	}
 }
 
@@ -81,6 +84,7 @@ func (t Time) MarshalJSON() ([]byte, error) {
 // It supports string, object (e.g. pq.NullTime and friends)
 // and null input.
 func (t *Time) UnmarshalJSON(data []byte) error {
+	t.Present = true
 	var err error
 	var v interface{}
 	if err = json.Unmarshal(data, &v); err != nil {
@@ -116,6 +120,7 @@ func (t Time) MarshalText() ([]byte, error) {
 }
 
 func (t *Time) UnmarshalText(text []byte) error {
+	t.Present = true
 	str := string(text)
 	if str == "" || str == "null" {
 		t.Valid = false

@@ -16,11 +16,13 @@ var (
 func TestFloatFrom(t *testing.T) {
 	f := FloatFrom(1.2345)
 	assertFloat(t, f, "FloatFrom()")
+	assertPresentFloat(t, f, "true: initial state is present")
 
 	zero := FloatFrom(0)
 	if !zero.Valid {
 		t.Error("FloatFrom(0)", "is invalid, but should be valid")
 	}
+	assertPresentFloat(t, zero, "false: initial state is present")
 }
 
 func TestFloatFromPtr(t *testing.T) {
@@ -28,9 +30,11 @@ func TestFloatFromPtr(t *testing.T) {
 	iptr := &n
 	f := FloatFromPtr(iptr)
 	assertFloat(t, f, "FloatFromPtr()")
+	assertPresentFloat(t, f, "FloatFromPtr()")
 
 	null := FloatFromPtr(nil)
 	assertNullFloat(t, null, "FloatFromPtr(nil)")
+	assertPresentFloat(t, null, "FloatFromPtr(nil)")
 }
 
 func TestUnmarshalFloat(t *testing.T) {
@@ -38,26 +42,31 @@ func TestUnmarshalFloat(t *testing.T) {
 	err := json.Unmarshal(floatJSON, &f)
 	maybePanic(err)
 	assertFloat(t, f, "float json")
+	assertPresentFloat(t, f, "float json")
 
 	var sf Float
 	err = json.Unmarshal(floatStringJSON, &sf)
 	maybePanic(err)
 	assertFloat(t, sf, "string float json")
+	assertPresentFloat(t, sf, "string float json")
 
 	var nf Float
 	err = json.Unmarshal(nullFloatJSON, &nf)
 	maybePanic(err)
 	assertFloat(t, nf, "sql.NullFloat64 json")
+	assertPresentFloat(t, nf, "sql.NullFloat64 json")
 
 	var null Float
 	err = json.Unmarshal(nullJSON, &null)
 	maybePanic(err)
 	assertNullFloat(t, null, "null json")
+	assertPresentFloat(t, null, "null json")
 
 	var blank Float
 	err = json.Unmarshal(floatBlankJSON, &blank)
 	maybePanic(err)
 	assertNullFloat(t, blank, "null blank string json")
+	assertPresentFloat(t, blank, "null blank string json")
 
 	var badType Float
 	err = json.Unmarshal(boolJSON, &badType)
@@ -65,6 +74,7 @@ func TestUnmarshalFloat(t *testing.T) {
 		panic("err should not be nil")
 	}
 	assertNullFloat(t, badType, "wrong type json")
+	assertPresentFloat(t, badType, "wrong type json")
 
 	var invalid Float
 	err = invalid.UnmarshalJSON(invalidJSON)
@@ -78,16 +88,19 @@ func TestTextUnmarshalFloat(t *testing.T) {
 	err := f.UnmarshalText([]byte("1.2345"))
 	maybePanic(err)
 	assertFloat(t, f, "UnmarshalText() float")
+	assertPresentFloat(t, f, "UnmarshalText() float")
 
 	var blank Float
 	err = blank.UnmarshalText([]byte(""))
 	maybePanic(err)
 	assertNullFloat(t, blank, "UnmarshalText() empty float")
+	assertPresentFloat(t, blank, "UnmarshalText() empty float")
 
 	var null Float
 	err = null.UnmarshalText([]byte("null"))
 	maybePanic(err)
 	assertNullFloat(t, null, `UnmarshalText() "null"`)
+	assertPresentFloat(t, null, `UnmarshalText() "null"`)
 }
 
 func TestMarshalFloat(t *testing.T) {
@@ -159,16 +172,19 @@ func TestFloatScan(t *testing.T) {
 	err := f.Scan(1.2345)
 	maybePanic(err)
 	assertFloat(t, f, "scanned float")
+	assertPresentFloat(t, f, "scanned float")
 
 	var sf Float
 	err = sf.Scan("1.2345")
 	maybePanic(err)
 	assertFloat(t, sf, "scanned string float")
+	assertPresentFloat(t, sf, "scanned string float")
 
 	var null Float
 	err = null.Scan(nil)
 	maybePanic(err)
 	assertNullFloat(t, null, "scanned null")
+	assertPresentFloat(t, null, "scanned null")
 }
 
 func TestFloatInfNaN(t *testing.T) {
@@ -190,11 +206,13 @@ func TestFloatValueOrZero(t *testing.T) {
 	if valid.ValueOrZero() != 1.2345 {
 		t.Error("unexpected ValueOrZero", valid.ValueOrZero())
 	}
+	assertPresentFloat(t, valid, "NewFloat(1.2345, true).Present")
 
 	invalid := NewFloat(1.2345, false)
 	if invalid.ValueOrZero() != 0 {
 		t.Error("unexpected ValueOrZero", invalid.ValueOrZero())
 	}
+	assertPresentFloat(t, invalid, "NewFloat(1.2345, false).Present")
 }
 
 func assertFloat(t *testing.T, f Float, from string) {
@@ -209,5 +227,17 @@ func assertFloat(t *testing.T, f Float, from string) {
 func assertNullFloat(t *testing.T, f Float, from string) {
 	if f.Valid {
 		t.Error(from, "is valid, but should be invalid")
+	}
+}
+
+func assertPresentFloat(t *testing.T, f Float, from string) {
+	if !f.Present {
+		t.Error(from, "is absent, but should be present")
+	}
+}
+
+func assertAbsentFloat(t *testing.T, f Float, from string) {
+	if f.Present {
+		t.Error(from, "is present, but should be absent")
 	}
 }
